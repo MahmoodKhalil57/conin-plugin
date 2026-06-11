@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "conin": {
+      "type": "http",
+      "url": "https://construction-intelligence.saastemly.com/mcp",
+      "oauth": {}
+    }
+  }
+}

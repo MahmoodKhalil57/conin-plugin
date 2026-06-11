@@ -1,0 +1,15 @@
+{
+  "name": "conin-marketplace",
+  "owner": {
+    "name": "Conin — Construction Intelligence",
+    "email": "saastemly@gmail.com"
+  },
+  "description": "Construction Intelligence (Conin) — turn raw, messy construction documents into rigorous, decision-grade deliverables across the project lifecycle.",
+  "plugins": [
+    {
+      "name": "conin",
+      "source": "./plugins/conin",
+      "description": "Conin — Construction Intelligence: feasibility studies, cost plans, payment certificates, variation accounts, claims registers, tender evaluations and more. One MCP + a served preprompt; deterministic-first, every figure graded SOURCED or ASSUMED."
+    }
+  ]
+}

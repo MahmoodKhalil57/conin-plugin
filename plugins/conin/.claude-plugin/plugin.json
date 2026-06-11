@@ -1,0 +1,13 @@
+{
+  "name": "conin",
+  "displayName": "Conin — Construction Intelligence",
+  "description": "Construction Intelligence: generate decision-grade construction deliverables (feasibility studies, cost plans, IPC/mostakhlas payment certificates, variation accounts, claims registers, tender evaluations, final accounts) from your documents. Deterministic-first — every figure is graded SOURCED or ASSUMED.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Conin",
+    "email": "saastemly@gmail.com"
+  },
+  "homepage": "https://construction-intelligence.saastemly.com",
+  "keywords": ["construction", "feasibility", "quantity-surveying", "FIDIC", "MENA", "deliverables", "reconciliation"],
+  "mcpServers": "./.mcp.json"
+}
