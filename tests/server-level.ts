@@ -24,18 +24,27 @@ const rpc = async (method: string, params?: unknown) => {
 
 console.log(`\n▶ Conin server-level proof @ ${BASE}${KEY ? "  (with key)" : "  (no key — handshake checks only)"}\n`);
 
-// ── handshake (no auth needed) ──────────────────────────────────────────────────────────────────
+// ── discovery (public) + the auth challenge ─────────────────────────────────────────────────────
 const instr = await fetch(`${BASE}/v1/instructions`).then((r) => r.json()).catch(() => ({})) as any;
-ok("GET /v1/instructions serves the preprompt", typeof instr.instructions === "string" && instr.instructions.length > 1000);
+ok("GET /v1/instructions serves the preprompt (public)", typeof instr.instructions === "string" && instr.instructions.length > 1000);
 ok("…and points at both entrypoints (/mcp + /v1)", !!instr?.entrypoints?.mcp && !!instr?.entrypoints?.openapi);
-const init = await rpc("initialize", {});
-ok("POST /mcp initialize returns serverInfo + instructions", init.body?.result?.serverInfo?.name === "construction-intelligence" && typeof init.body?.result?.instructions === "string");
+
+// /mcp is an OAuth-PROTECTED resource: an unauthenticated request (even `initialize`) MUST 401 with a WWW-Authenticate
+// pointing at the .well-known doc — that 401 is what makes a remote MCP host (Claude Desktop) show the login.
+const raw = await fetch(`${BASE}/mcp`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize", params: {} }) });
+ok("POST /mcp initialize WITHOUT auth → 401 (the connect-time OAuth trigger)", raw.status === 401);
+ok("…401 carries WWW-Authenticate → the OAuth login point", /Bearer .*resource_metadata/i.test(raw.headers.get("www-authenticate") ?? ""));
+ok("…and .well-known/oauth-protected-resource resolves", (await fetch(`${BASE}/.well-known/oauth-protected-resource`)).status === 200);
 
 if (!KEY) {
-  console.log("\n  (set CONIN_TEST_KEY to run tools/list, generate, and the /v1↔/mcp consistency check)\n");
-  console.log(`${pass} passed, ${fail} failed (handshake only).`);
+  console.log("\n  (set CONIN_TEST_KEY to run authed initialize, tools/list, generate, and the /v1↔/mcp consistency check)\n");
+  console.log(`${pass} passed, ${fail} failed (discovery + auth-challenge only).`);
   process.exit(fail === 0 ? 0 : 1);
 }
+
+// authed initialize (key path) → serverInfo + the served preprompt
+const init = await rpc("initialize", {});
+ok("POST /mcp initialize WITH a key → serverInfo + instructions", init.body?.result?.serverInfo?.name === "construction-intelligence" && typeof init.body?.result?.instructions === "string");
 
 // ── tools/list == the registry (key-scoped) ─────────────────────────────────────────────────────
 const list = await rpc("tools/list");
