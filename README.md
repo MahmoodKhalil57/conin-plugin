@@ -31,7 +31,7 @@ plugins/conin/
   ├── .claude-plugin/plugin.json         the plugin manifest
   ├── .mcp.json                          the REMOTE MCP server (https://…/mcp, OAuth on first use)
   └── skills/conin/SKILL.md              the skill — GENERATED from the app, never hand-edited
-scripts/build-skill.ts                   regenerates SKILL.md from GET /v1/instructions (single source of truth)
+scripts/build-plugin.ts                   projects the WHOLE plugin (plugin.json + .mcp.json + SKILL.md) from contract.ts + the live preprompt
 tests/                                   the unattended test harness (see below)
 ```
 
@@ -39,8 +39,8 @@ The skill carries no duplicated knowledge: it's the app's own served preprompt (
 short trigger. **`SKILL.md` is generated — do not edit it by hand.** To refresh it after an app release:
 
 ```sh
-bun scripts/build-skill.ts                                   # against production
-CONIN_BASE=http://localhost:8787 bun scripts/build-skill.ts  # against a local app
+bun scripts/build-plugin.ts                                   # against production
+CONIN_BASE=http://localhost:8787 bun scripts/build-plugin.ts  # against a local app
 ```
 
 ## Tests
