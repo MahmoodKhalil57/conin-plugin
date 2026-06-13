@@ -8,6 +8,14 @@
     "email": "saastemly@gmail.com"
   },
   "homepage": "https://construction-intelligence.saastemly.com",
-  "keywords": ["construction", "feasibility", "quantity-surveying", "FIDIC", "MENA", "deliverables", "reconciliation"],
+  "keywords": [
+    "construction",
+    "feasibility",
+    "quantity-surveying",
+    "FIDIC",
+    "MENA",
+    "deliverables",
+    "reconciliation"
+  ],
   "mcpServers": "./.mcp.json"
 }
