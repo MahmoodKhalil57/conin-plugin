@@ -69,7 +69,41 @@ silently go stale when the app repo ships a new preprompt.
 
 ## Other hosts
 
-Conin is a host-agnostic core; the same `GET /v1/instructions` + `/v1` OpenAPI + `/mcp` power other front-ends:
+Conin is a host-agnostic core: one preprompt (`GET /v1/instructions`) + one tool surface, projected into each host's
+shape. Besides this Claude plugin, the app **serves two more host projections** — both public, always-fresh, and
+identical-by-construction to `/mcp` (same `toSulukDoc`/`toolsFrom` pipeline):
 
-- **ChatGPT** — a custom GPT: Instructions = `GET /v1/instructions`, Actions = the `/v1` OpenAPI, Auth = a Conin API key.
-- **Any OpenAI/OpenAPI-compatible agent** — point it at `/v1` (REST) or `/mcp` (MCP) with a scoped key.
+| Host | Tool surface | Instructions |
+| --- | --- | --- |
+| Claude (this plugin) | remote `/mcp` (OAuth) | `skills/conin/SKILL.md` (pinned snapshot) |
+| ChatGPT custom GPT | `GET /v1/openapi.chatgpt.json` (Actions) | paste `GET /v1/instructions?format=text` |
+| OpenRouter / any OpenAI-tool agent | `GET /v1/openrouter.json` (function-tools) | fetch `manifest.instructions.source` |
+
+### ChatGPT custom GPT
+
+1. **Create a GPT** → chatgpt.com → *Create*.
+2. **Instructions** — paste the body of `GET https://construction-intelligence.saastemly.com/v1/instructions?format=text`.
+3. **Actions → Import from URL** — `https://construction-intelligence.saastemly.com/v1/openapi.chatgpt.json`. This is a
+   curated **26-operation, valid OpenAPI 3.0.3** schema: ChatGPT enforces a ~30-action cap and a partial 3.0 parser, so it
+   drops the binary xlsx export + advanced template-scaffold tuning, downconverts 3.1 constructs, and excludes every
+   web-only route. (Everything is still reachable via `/mcp`, the full `/v1`, or the web app.)
+4. **Authentication → API Key → Custom header**, header name `x-api-key`, value = a scoped Conin key (`ci_…`, mint one in
+   the web app).
+5. A **Privacy Policy URL** is required only to **publish/share** the GPT (public or GPT Store); a private "only me" GPT
+   needs none. Publishing to the Store also needs a verified builder profile (business name or DNS-TXT domain verification).
+
+### OpenRouter (or any OpenAI-compatible tool-calling agent)
+
+OpenRouter has no hosted-agent/manifest concept — `GET /v1/openrouter.json` is a **developer-side config** you load into
+your own loop: it carries OpenAI function-tools (the full public surface), an instructions **pointer** (URL + contentHash
++ version, never inlined), and a cheap→capable model list. The loop:
+
+1. `GET manifest.instructions.source` (= `/v1/instructions`) → use as the **system message** (optionally check the sha256).
+2. POST `https://openrouter.ai/api/v1/chat/completions` with `model = manifest.model[0]`, your system message, and
+   `tools = manifest.tools` verbatim (`Authorization: Bearer <OPENROUTER_KEY>`).
+3. On `finish_reason: "tool_calls"`, `JSON.parse` each call's `arguments` and dispatch by `function.name` to the matching
+   Conin `/v1` route **or** `/mcp` `tools/call`, sending your scoped `x-api-key`.
+4. Append `{role:"tool", tool_call_id, content}` for each and re-POST; loop until `finish_reason: "stop"`.
+
+Because the tool JSON shape is identical across OpenRouter, Conin `/v1`, and Conin `/mcp`, no per-host schema translation
+is needed — only name→route dispatch + auth.
