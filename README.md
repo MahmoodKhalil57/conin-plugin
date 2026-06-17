@@ -45,21 +45,27 @@ CONIN_BASE=http://localhost:8787 bun scripts/build-plugin.ts  # against a local 
 
 ## Tests
 
-Both harnesses run against the live core; both are unattended once a scoped **test API key** is set (mint one in the
-web app; `studies:read` is enough). They mirror the app repo's pragmaticgui pattern.
+The key-gated harnesses run against the live core, unattended once a scoped **test API key** is set (mint one in the
+web app; `studies:read` is enough). They mirror the app repo's pragmaticgui pattern. The freshness gate needs no key.
 
 ```sh
+# freshness — fail if SKILL.md drifted from the live served preprompt (public endpoint, NO key; also runs in CI)
+bun run freshness
+
 # C.1 + C.4 — server-level: the key authenticates /mcp; /mcp and /v1 yield the SAME deliverable (one core, two views)
 CONIN_TEST_KEY=ci_… bun tests/server-level.ts
 
 # C.2 + C.3 — plugin-level: drive a real `claude` CLI (via pragmaticgui) and assert it CALLS a Conin tool for a figure
-#   first register the MCP for the test cwd over the key path (no interactive OAuth):
-claude mcp add --scope local --transport http --header "x-api-key: $CONIN_TEST_KEY" \
-  conin https://construction-intelligence.saastemly.com/mcp
+#   first register the MCP for the test cwd over the key path (no interactive OAuth).
+#   NB: name + url come BEFORE --header — the variadic --header would otherwise swallow them as extra header values.
+claude mcp add conin https://construction-intelligence.saastemly.com/mcp \
+  --scope local --transport http --header "x-api-key: $CONIN_TEST_KEY"
 CONIN_TEST_KEY=ci_… bun tests/plugin-pragmatic.ts
 ```
 
 Without a key, `server-level.ts` still runs the public handshake checks (`/v1/instructions`, MCP `initialize`).
+CI (`.github/workflows/freshness.yml`) runs `bun run freshness` on every push/PR + daily, so the published skill can't
+silently go stale when the app repo ships a new preprompt.
 
 ## Other hosts
 

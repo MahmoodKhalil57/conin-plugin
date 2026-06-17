@@ -1,0 +1,19 @@
+# verifyAgentFreshness — fail if the published SKILL.md drifts from the live served preprompt (GET /v1/instructions).
+# No secrets: the instructions endpoint is public, so this runs on every push/PR and on a daily schedule (the preprompt
+# can change in the app repo without touching this one — the cron catches that). To fix a failure: `bun run build` + commit.
+name: skill-freshness
+on:
+  push:
+    branches: [master]
+  pull_request:
+  schedule:
+    - cron: "17 6 * * *" # daily — catches preprompt changes shipped from the app repo
+  workflow_dispatch:
+jobs:
+  freshness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run freshness

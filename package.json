@@ -3,7 +3,8 @@
   "private": true,
   "description": "Conin marketplace plugin — projected from conin's x-suluk-agents contract via @suluk/agents (no hand-authored artifacts).",
   "scripts": {
-    "build": "bun scripts/build-plugin.ts"
+    "build": "bun scripts/build-plugin.ts",
+    "freshness": "bun tests/skill-freshness.ts"
   },
   "dependencies": {
     "@suluk/agents": "^0.1.3",
